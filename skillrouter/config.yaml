@@ -9,9 +9,9 @@ matching:
   # "keyword" = fast substring match (default, zero extra deps).
   # "embedding" = semantic match via Ollama embeddings. Requires:
   #   `ollama pull nomic-embed-text` (or whatever you set as embed_model).
-  method: keyword
+  method: embedding
   embed_model: nomic-embed-text
-  threshold: 0.55  # min cosine similarity to count as a match (embedding mode only)
+  threshold: 0.50  # min cosine similarity to count as a match (embedding mode only)
 
 # Classify installed Ollama tags by name pattern.
 # Each rule: "match" (substring, case-insensitive) + kinds it can handle.
