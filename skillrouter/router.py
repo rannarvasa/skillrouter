@@ -4,6 +4,8 @@ import yaml
 from pathlib import Path
 from typing import Optional
 
+from matcher import build_matcher
+
 
 STRENGTH_ORDER = ["tiny", "small", "strong", "frontier"]
 
@@ -150,6 +152,7 @@ class Router:
         self.skills = self._load_skills(root / "skills")
         ollama_host = self.config["providers"]["ollama"]["host"]
         self.registry = ModelRegistry(self.config, ollama_host)
+        self.matcher = build_matcher(self.skills, self.config, root)
 
     def _load_config(self, path: Path) -> dict:
         with open(path, "r", encoding="utf-8") as f:
@@ -170,14 +173,19 @@ class Router:
         return None
 
     def match(self, prompt: str) -> Optional[Skill]:
-        best: Optional[Skill] = None
-        best_score = 0
-        for s in self.skills:
-            score = s.match_score(prompt)
-            if score > best_score:
-                best_score = score
-                best = s
-        return best
+        skill, _ = self.matcher.match(prompt)
+        return skill
+
+    def pricing(self, provider: str, model: str) -> Optional[dict]:
+        """Return {input, output} USD-per-million-token prices, or None if unpriced."""
+        if provider == "anthropic":
+            meta = self.config.get("anthropic_models", {}).get(model, {})
+            if "price_per_mtok_input" in meta:
+                return {
+                    "input": meta["price_per_mtok_input"],
+                    "output": meta["price_per_mtok_output"],
+                }
+        return None
 
     def resolve_for_skill(self, skill: Skill, local_forced: bool) -> dict:
         """Return {provider, model, reason} for a given skill."""

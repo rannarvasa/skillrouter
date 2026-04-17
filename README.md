@@ -173,7 +173,20 @@ matching:
 - `default_model` — fallback when no skill matches an incoming prompt
 - `providers.ollama.host` — where Ollama is listening (default is fine)
 - `providers.anthropic.api_key_env` — environment variable holding your API key
-- `matching.method` — how skills are matched (keyword for now, embedding later)
+- `matching.method` — `keyword` (fast, substring match, zero extra deps) or `embedding` (semantic match via Ollama embeddings — requires `ollama pull nomic-embed-text`)
+- `matching.embed_model` — which Ollama embedding model to use (default `nomic-embed-text`)
+- `matching.threshold` — minimum cosine similarity for a skill to count as a match in embedding mode (default `0.55`)
+
+### Switching to semantic matching
+
+Keyword matching is fast but brittle — "write me a py func" won't match the trigger "python function". Embedding matching uses semantic similarity instead.
+
+```bash
+ollama pull nomic-embed-text
+# then edit config.yaml: matching.method: embedding
+```
+
+First run embeds every skill and caches the vectors to `.cache/`. Subsequent runs only embed the incoming prompt (~50ms).
 
 ---
 
@@ -285,6 +298,15 @@ python cli.py --skill python_function "something that normally wouldn't match"
 ```bash
 python cli.py --local "analyze the tradeoffs between REST and GraphQL"
 # Warning: hard_reasoning wants anthropic, but --local forced. Falling back to default.
+```
+
+### Check your API spend
+
+```bash
+python cli.py --cost
+# === 2026-04 ===  42 calls  |  $0.1837 total  |  12,450 in / 3,210 out
+#   anthropic/claude-sonnet-4-5                     8 calls   10,200 in  2,800 out  $0.0726
+#   ollama/qwen2.5-coder:7b                        34 calls    2,250 in    410 out  $0.0000
 ```
 
 ### Pipe input
@@ -419,11 +441,11 @@ The API is the escape hatch for when local genuinely isn't enough — not the de
 - Basic CLI with skill forcing and local forcing
 - JSONL logging
 
-### v0.2 (after a week of use)
-- **Embedding-based matching** — use sentence-transformers to match prompts to skill descriptions semantically
-- **Cost tracking** — parse Anthropic token usage, track monthly spend
-- **Stdin support** — `cat file.md | ask "summarize"` properly handles piped input
-- **Better error messages** — helpful output when Ollama is down or API key missing
+### v0.2 ✅ shipped
+- ✅ **Embedding-based matching** — semantic match via Ollama embeddings
+- ✅ **Cost tracking** — `--cost` shows monthly Anthropic spend, logged per-call
+- ✅ **Stdin support** — `cat file.md | ask "summarize"` works
+- ✅ **Better error messages** — friendly Ollama connection/model errors
 
 ### v0.3 (when it becomes a real tool)
 - **Multi-turn conversations** — maintain context across prompts within a session

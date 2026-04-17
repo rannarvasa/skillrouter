@@ -9,11 +9,12 @@ class AnthropicProvider:
         api_key = os.environ.get(api_key_env)
         if not api_key:
             raise RuntimeError(
-                f"{api_key_env} not set. Export it or use --local to force local execution."
+                f"{api_key_env} not set. Export it (e.g. `export {api_key_env}=sk-ant-...`) "
+                f"or use --local to force local execution."
             )
         self.client = anthropic.Anthropic(api_key=api_key)
 
-    def generate(self, model: str, system_prompt: str, user_prompt: str) -> str:
+    def generate(self, model: str, system_prompt: str, user_prompt: str) -> dict:
         chunks = []
         with self.client.messages.stream(
             model=model,
@@ -24,5 +25,11 @@ class AnthropicProvider:
             for text in stream.text_stream:
                 print(text, end="", flush=True)
                 chunks.append(text)
+            final = stream.get_final_message()
         print()
-        return "".join(chunks)
+        usage = getattr(final, "usage", None)
+        return {
+            "text": "".join(chunks),
+            "input_tokens": getattr(usage, "input_tokens", 0) if usage else 0,
+            "output_tokens": getattr(usage, "output_tokens", 0) if usage else 0,
+        }
