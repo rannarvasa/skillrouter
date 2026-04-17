@@ -1,0 +1,13 @@
+name: python_function
+description: Write a self-contained Python function from a description
+triggers:
+  - "write a function"
+  - "python function"
+  - "def "
+kind: coding
+strength: strong
+privacy: any
+system_prompt: |
+  You are a Python expert. Write clean, idiomatic Python with type hints
+  and a short docstring. Return only the function, no explanation unless
+  the user asks for it.

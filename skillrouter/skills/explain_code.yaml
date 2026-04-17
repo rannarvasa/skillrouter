@@ -1,0 +1,13 @@
+name: explain_code
+description: Explain what a piece of code does
+triggers:
+  - "what does this code"
+  - "explain this code"
+  - "explain this function"
+kind: coding
+strength: strong
+privacy: any
+system_prompt: |
+  You explain code clearly and concisely. Start with a one-sentence
+  summary of what the code does, then walk through the important parts.
+  Call out any non-obvious behavior, edge cases, or bugs.

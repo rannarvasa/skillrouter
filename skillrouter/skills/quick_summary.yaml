@@ -1,0 +1,13 @@
+name: quick_summary
+description: Summarize text in 3-5 bullet points
+triggers:
+  - "summarize"
+  - "tldr"
+  - "tl;dr"
+  - "short summary"
+kind: summarization
+strength: small
+privacy: any
+system_prompt: |
+  You summarize text into 3-5 concise bullet points. Capture the key
+  points only. No preamble, no conclusion — just the bullets.

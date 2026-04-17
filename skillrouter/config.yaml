@@ -1,0 +1,72 @@
+default_model: qwen2.5:1.5b
+providers:
+  ollama:
+    host: http://localhost:11434
+  anthropic:
+    api_key_env: ANTHROPIC_API_KEY
+    default_model: claude-sonnet-4-5
+matching:
+  method: keyword
+
+# Classify installed Ollama tags by name pattern.
+# Each rule: "match" (substring, case-insensitive) + kinds it can handle.
+# Strength is resolved from "strength_by_size" (looks for tokens in the tag like :7b, :3b, e4b)
+# or falls back to "strength" if size not present.
+model_rules:
+  - match: "coder"
+    kinds: [coding, general]
+    strength_by_size:
+      "1.5b": tiny
+      "3b": small
+      "7b": strong
+      "14b": strong
+      "32b": frontier
+    strength: small
+  - match: "gemma"
+    kinds: [general, reasoning, summarization, rewriting]
+    strength_by_size:
+      "2b": small
+      "e4b": strong
+      "9b": strong
+      "27b": frontier
+    strength: small
+  - match: "qwen"
+    kinds: [general, reasoning, summarization, rewriting, coding]
+    strength_by_size:
+      "1.5b": tiny
+      "1.7b": tiny
+      "3b": small
+      "4b": small
+      "7b": strong
+      "14b": strong
+      "32b": frontier
+    strength: small
+  - match: "llama"
+    kinds: [general, reasoning, summarization, rewriting]
+    strength_by_size:
+      "1b": tiny
+      "3b": small
+      "7b": strong
+      "8b": strong
+      "70b": frontier
+    strength: tiny
+  - match: "tinyllama"
+    kinds: [general]
+    strength: tiny
+  - match: "moondream"
+    kinds: [vision]
+    strength: small
+  - match: "mistral"
+    kinds: [general, reasoning, summarization, rewriting]
+    strength_by_size:
+      "7b": strong
+      "22b": frontier
+    strength: small
+
+# Known Anthropic models — always reachable if ANTHROPIC_API_KEY is set.
+anthropic_models:
+  claude-sonnet-4-5:
+    kinds: [coding, reasoning, summarization, rewriting, general]
+    strength: frontier
+
+default_fallback_kind: general

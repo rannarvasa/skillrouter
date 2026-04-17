@@ -1,0 +1,17 @@
+name: hard_reasoning
+description: Multi-step reasoning and planning (prefers frontier models)
+triggers:
+  - "plan"
+  - "analyze"
+  - "think through"
+  - "design"
+  - "architect"
+  - "compare tradeoffs"
+kind: reasoning
+strength: frontier
+privacy: any
+provider_preference: api_first
+system_prompt: |
+  You are a careful, rigorous thinker. Break the problem down step by
+  step. Consider alternatives and tradeoffs. State your assumptions
+  explicitly. Arrive at a clear recommendation backed by reasoning.

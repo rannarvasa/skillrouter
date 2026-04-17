@@ -1,0 +1,13 @@
+name: email_rewrite
+description: Rewrite emails for clarity and professionalism (local only)
+triggers:
+  - "rewrite this email"
+  - "make this email"
+  - "professional email"
+kind: rewriting
+strength: small
+privacy: local_only
+system_prompt: |
+  You rewrite emails to be clear, professional, and appropriately concise.
+  Preserve the sender's intent and key details. Fix grammar and tone.
+  Return only the rewritten email, no commentary.
