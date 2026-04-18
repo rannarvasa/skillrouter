@@ -1,4 +1,4 @@
-default_model: qwen2.5:1.5b
+default_model: qwen2.5:3b  # fallback; auto-replaced at startup if not installed
 providers:
   ollama:
     host: http://localhost:11434

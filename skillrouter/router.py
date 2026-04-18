@@ -153,7 +153,33 @@ class Router:
         self.skills = self._load_skills(root / "skills")
         ollama_host = self.config["providers"]["ollama"]["host"]
         self.registry = ModelRegistry(self.config, ollama_host)
+        self._validate_default_model()
         self.matcher = build_matcher(self.skills, self.config, root)
+
+    def _validate_default_model(self):
+        """If config's default_model isn't installed, auto-pick the smallest installed Ollama tag."""
+        configured = self.config.get("default_model")
+        installed_tags = [m["tag"] for m in self.registry.installed_ollama]
+        if configured in installed_tags:
+            return
+        if not installed_tags:
+            return  # nothing to fall back to; let callers error with a clear message later
+
+        strength_order = {"tiny": 0, "small": 1, "strong": 2, "frontier": 3}
+        non_embed = [
+            m for m in self.registry.installed_ollama
+            if "embed" not in m["tag"].lower() and "general" in m["kinds"]
+        ] or self.registry.installed_ollama
+        non_embed.sort(key=lambda m: (strength_order.get(m["strength"], 1), m["tag"]))
+        pick = non_embed[0]["tag"]
+
+        if configured:
+            print(
+                f"[router] default_model '{configured}' is not installed. "
+                f"Using '{pick}' instead (auto-picked from installed models).",
+                file=sys.stderr,
+            )
+        self.config["default_model"] = pick
 
     def _load_config(self, path: Path) -> dict:
         with open(path, "r", encoding="utf-8") as f:
