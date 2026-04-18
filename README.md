@@ -18,6 +18,8 @@ def reverse_string(s: str) -> str:
     return s[::-1]
 ```
 
+**Prefer a GUI?** Run `python skillrouter/app.py` (or double-click `skillrouter.bat` on Windows) for a simple Tk window with prompt input, live routing info, and response display.
+
 **New here?** Jump to [Installation](#installation) → [Usage](#usage) → [Adding new skills](#adding-new-skills).
 **Want to contribute?** See [CONTRIBUTING.md](CONTRIBUTING.md) — adding a skill is a single YAML file.
 
@@ -309,6 +311,15 @@ python cli.py --cost
 #   anthropic/claude-sonnet-4-5                     8 calls   10,200 in  2,800 out  $0.0726
 #   ollama/qwen2.5-coder:7b                        34 calls    2,250 in    410 out  $0.0000
 ```
+
+### Desktop GUI
+
+```bash
+python skillrouter/app.py
+# or on Windows: double-click skillrouter.bat
+```
+
+A minimal Tk window with a prompt box, skill/model routing display, and response output. Built on stdlib — no extra deps. Ctrl+Enter submits. Force a specific skill or `--local` mode via the controls at the top.
 
 ### Pipe input
 
