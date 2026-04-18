@@ -128,22 +128,26 @@ pyyaml>=6.0
 
 ### 3. Install Ollama
 
-Download from https://ollama.com and install for your OS. Then pull at least one model:
+Download from https://ollama.com and install for your OS. **skillrouter adapts to whatever models you have installed** — there's no required list. Pull a few of the suggestions below and skillrouter will automatically match skills to the best available model at startup.
+
+Minimal setup (what most people want):
 
 ```bash
-ollama pull qwen2.5:3b              # small, fast, for simple tasks
-ollama pull qwen2.5-coder:7b        # for coding tasks
-ollama pull nomic-embed-text        # required — used for semantic skill matching
+ollama pull qwen2.5:3b              # tiny + fast, handles simple tasks (~2GB)
+ollama pull nomic-embed-text        # enables semantic skill matching (~275MB)
 ```
 
-Recommended models by task:
+Further suggestions by task — install only what you'll actually use:
 
-| Task | Model | Size |
-|------|-------|------|
-| Quick summaries, rewrites | `qwen2.5:3b` | ~2GB |
-| Python / general coding | `qwen2.5-coder:7b` | ~5GB |
-| Heavier coding (if you have RAM) | `qwen2.5-coder:32b` | ~20GB |
-| General chat | `qwen2.5:7b` | ~5GB |
+| If you want to... | Suggested model | Size |
+|---|---|---|
+| Write/explain code | `qwen2.5-coder:7b` | ~5GB |
+| Write *heavier* code (with RAM to spare) | `qwen2.5-coder:32b` | ~20GB |
+| Summarize / rewrite on small prompts | `qwen2.5:3b` | ~2GB |
+| General chat at better quality | `qwen2.5:7b` or `gemma2:9b` | ~5-6GB |
+| Reasoning without paying for an API | `qwen2.5:32b` or similar 30B+ model | ~20GB+ |
+
+Run `python cli.py --doctor` after installing any new model — skillrouter will detect it, classify it by kind (coding / summarization / etc) and strength (tiny / small / strong / frontier), and route matching skills to it. If you install nothing, skillrouter will show an onboarding message with exact `ollama pull` commands to get started.
 
 ### 4. Set up Anthropic API (optional)
 
@@ -162,23 +166,31 @@ Add that to your `.bashrc` / `.zshrc` to make it persistent.
 ### `config.yaml`
 
 ```yaml
-default_model: qwen2.5:3b
+# default_model is optional — a preference for the fallback when no skill
+# matches. skillrouter reconciles this against installed models at startup
+# and auto-picks the smallest installed non-embedding model if the preferred
+# tag isn't present. Leave commented to always auto-pick.
+# default_model: qwen2.5:3b
+
 providers:
   ollama:
     host: http://localhost:11434
   anthropic:
     api_key_env: ANTHROPIC_API_KEY
     default_model: claude-sonnet-4-5
+
 matching:
-  method: keyword    # later: embedding
+  method: embedding              # or "keyword" for fast substring matching
+  embed_model: nomic-embed-text:latest
+  threshold: 0.50                # min cosine similarity (embedding mode)
 ```
 
-- `default_model` — fallback when no skill matches an incoming prompt
+- `default_model` — **optional** preference for fallback when no skill matches. Auto-replaced at startup if not installed.
 - `providers.ollama.host` — where Ollama is listening (default is fine)
 - `providers.anthropic.api_key_env` — environment variable holding your API key
 - `matching.method` — `keyword` (fast, substring match, zero extra deps) or `embedding` (semantic match via Ollama embeddings — requires `ollama pull nomic-embed-text`)
-- `matching.embed_model` — which Ollama embedding model to use (default `nomic-embed-text`)
-- `matching.threshold` — minimum cosine similarity for a skill to count as a match in embedding mode (default `0.55`)
+- `matching.embed_model` — which Ollama embedding model to use
+- `matching.threshold` — minimum cosine similarity for a skill to match (embedding mode only)
 
 ### Switching to semantic matching
 
@@ -204,26 +216,31 @@ triggers:
   - "write a function"
   - "python function"
   - "def "
-provider: ollama
-model: qwen2.5-coder:7b
-privacy: any
+kind: coding             # what category of task this is
+strength: strong         # tiny / small / strong / frontier
+privacy: any             # or "local_only"
 system_prompt: |
   You are a Python expert. Write clean, idiomatic Python with type hints
   and a short docstring. Return only the function, no explanation unless
   the user asks for it.
 ```
 
+Skills declare **capability requirements** (`kind` + `strength`) rather than a specific model. At runtime skillrouter scans your installed Ollama models, classifies each one by kind and strength, then picks the best match for the skill. This is what makes the config portable — a skill says "I need a strong coder" and skillrouter figures out the rest.
+
 ### Fields
 
 | Field | Type | Description |
-|-------|------|-------------|
+|---|---|---|
 | `name` | string | Unique skill identifier (used for `--skill` flag) |
 | `description` | string | Human-readable summary, shown in `--list-skills` |
-| `triggers` | list | Keyword phrases that match this skill (case-insensitive substring match) |
-| `provider` | string | `ollama` or `anthropic` |
-| `model` | string | Exact model name (Ollama tag or Anthropic model ID) |
+| `triggers` | list | Phrases that match this skill (substring for keyword mode, semantic for embedding mode) |
+| `kind` | string | `coding`, `summarization`, `rewriting`, `reasoning`, `general`, `vision` |
+| `strength` | string | `tiny`, `small`, `strong`, `frontier` — how capable a model this skill needs |
 | `privacy` | string | `any` (can use any provider) or `local_only` (never route to API) |
 | `system_prompt` | string | Multi-line system prompt loaded into the model's context |
+| `tool` | string | Optional. `web` runs a search + fetch before generation and injects the results |
+| `provider` | string | Optional explicit override. `ollama` or `anthropic`. Bypasses capability routing. |
+| `model` | string | Optional explicit override. Exact model tag. Requires `provider` too. |
 
 ### Privacy tiers
 
@@ -236,25 +253,18 @@ If a `local_only` skill has `provider: anthropic`, the router treats it as a con
 
 ## Included skills
 
-### `python_function`
-Writes a single Python function. Uses qwen2.5-coder:7b locally.
-Triggers: "write a function", "python function", "def "
+Each skill declares a capability requirement. Which model handles it depends on what you have installed — run `python cli.py --doctor` to see the routing for your machine.
 
-### `quick_summary`
-Summarizes text in 3-5 bullet points. Uses qwen2.5:3b locally.
-Triggers: "summarize", "tldr", "tl;dr", "short summary"
+| Skill | Needs | Privacy | Triggers |
+|---|---|---|---|
+| `python_function` | `coding/strong` | any | "write a function", "python function", "def " |
+| `quick_summary` | `summarization/small` | any | "summarize", "tldr", "short summary" |
+| `explain_code` | `coding/strong` | any | "what does this code", "explain this code" |
+| `hard_reasoning` | `reasoning/frontier` | any | "plan", "analyze", "architect", "compare tradeoffs" |
+| `email_rewrite` | `rewriting/small` | **local_only** | "rewrite this email", "professional email" |
+| `web_search` | `summarization/small` + `tool: web` | any | "news", "latest", "today", "price of", "weather" |
 
-### `explain_code`
-Explains what a piece of code does. Uses qwen2.5-coder:7b locally.
-Triggers: "what does this code", "explain this code", "explain this function"
-
-### `hard_reasoning`
-Multi-step reasoning and planning. **Uses Claude via API** (costs money).
-Triggers: "plan", "analyze", "think through", "design", "architect", "compare tradeoffs"
-
-### `email_rewrite`
-Rewrites emails for clarity and professionalism. **Local only** — never sent to API.
-Triggers: "rewrite this email", "make this email", "professional email"
+`hard_reasoning` prefers a frontier model — if you have no local model strong enough, it'll route to Claude via API (requires `ANTHROPIC_API_KEY`). If the API isn't set up either, it falls back to the strongest local model available.
 
 ---
 
