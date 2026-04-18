@@ -131,6 +131,7 @@ Download from https://ollama.com and install for your OS. Then pull at least one
 ```bash
 ollama pull qwen2.5:3b              # small, fast, for simple tasks
 ollama pull qwen2.5-coder:7b        # for coding tasks
+ollama pull nomic-embed-text        # required — used for semantic skill matching
 ```
 
 Recommended models by task:
