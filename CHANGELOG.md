@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.0 — 2026-04-18
+
+### Added
+- **Web access for local models.** New `tool: web` field on skills. When a skill declares it, the router runs a DuckDuckGo search + page fetch on the prompt and injects the results as context before calling the model. No API keys, no new Python deps — pure stdlib (`urllib`, `html.parser`).
+- **New `web_search` skill** — triggers on "news", "latest", "today", "current", "price of", "weather", etc. Just type a question that needs live info and the local model gets fresh web context automatically.
+- **New `skillrouter/tools/` package** — pluggable place for future tools (file reading, shell exec, etc.).
+
+### Example
+```bash
+$ ask "whats the latest news on Anthropic Claude"
+[router] skill: web_search | model: gemma4-memory
+[tool] searching the web... fetched 13413 chars
+The latest news centers on Claude Opus 4.7, released...
+```
+
 ## v0.2.0 — 2026-04-18
 
 ### Added

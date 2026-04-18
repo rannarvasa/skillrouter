@@ -125,6 +125,13 @@ def main() -> int:
         f"| reason: {decision['reason']}\n"
     )
 
+    if decision.get("tool") == "web":
+        from tools.web import search_and_fetch
+        print("[tool] searching the web...")
+        context = search_and_fetch(prompt)
+        prompt = f"{context}\n\n---\n\nUSER QUESTION: {prompt}"
+        print(f"[tool] fetched {len(context)} chars of web context\n")
+
     try:
         provider = router.make_provider(decision["provider"])
     except RuntimeError as e:

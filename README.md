@@ -441,6 +441,10 @@ The API is the escape hatch for when local genuinely isn't enough — not the de
 - Basic CLI with skill forcing and local forcing
 - JSONL logging
 
+### v0.3 ✅ shipped
+- ✅ **Web access for local models** — `tool: web` field on skills runs a search + fetch before the model sees the prompt. Zero new deps.
+- ✅ New `web_search` skill — triggers on "news", "latest", "today", etc.
+
 ### v0.2 ✅ shipped
 - ✅ **Embedding-based matching** — semantic match via Ollama embeddings
 - ✅ **Cost tracking** — `--cost` shows monthly Anthropic spend, logged per-call

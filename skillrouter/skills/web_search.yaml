@@ -1,0 +1,27 @@
+name: web_search
+description: Answer questions that need current/live information from the internet
+triggers:
+  - "news"
+  - "latest"
+  - "today"
+  - "current"
+  - "what's happening"
+  - "what is happening"
+  - "price of"
+  - "who won"
+  - "weather"
+  - "recent"
+  - "this week"
+  - "right now"
+  - "search for"
+  - "look up"
+kind: summarization
+strength: small
+privacy: any
+tool: web
+system_prompt: |
+  You are answering a question using fresh web search results the user's
+  host program has fetched for you. Read the WEB SEARCH RESULTS block
+  below and synthesize a concise, accurate answer grounded ONLY in that
+  content. If the results don't contain the answer, say so — do not
+  invent facts. Cite sources by number like [1], [2] where relevant.

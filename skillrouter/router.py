@@ -30,6 +30,7 @@ class Skill:
         self.model = data.get("model")
         self.provider = data.get("provider")
         self.system_prompt = data.get("system_prompt", "")
+        self.tool = data.get("tool")
 
         if not self.model and not (self.kind and self.strength):
             raise ValueError(
@@ -274,6 +275,7 @@ class Router:
             "model": pick["model"],
             "system_prompt": skill.system_prompt,
             "reason": pick["reason"],
+            "tool": skill.tool,
         }
 
     def make_provider(self, provider_name: str):
