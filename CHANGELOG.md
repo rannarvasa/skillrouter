@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0 — 2026-04-18
+
+### Added
+- **Desktop GUI** (`skillrouter/app.py`). Tk-based, stdlib only — no new deps. Prompt box, live routing info (which skill / which model / why), scrollable response pane, token + cost footer. Generation runs on a worker thread so the UI stays responsive.
+- **Force-skill dropdown** and **`--local` checkbox** in the GUI.
+- **Windows launcher** (`skillrouter.bat`) — double-click to open the app without a terminal.
+- **Ctrl+Enter** to submit.
+
 ## v0.3.0 — 2026-04-18
 
 ### Added
