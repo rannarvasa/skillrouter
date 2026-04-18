@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.4.1 — 2026-04-18
+
+### Changed
+- `default_model` is now **optional** in `config.yaml` and treated as a preference. Router always reconciles against live Ollama scan at startup and auto-picks the smallest installed non-embedding model if the preferred one isn't present. Makes the config portable across machines.
+- Shipped config no longer hardcodes a specific model tag.
+
+### Added
+- **Onboarding flow** — if Ollama isn't running or no models are installed, both the CLI and GUI show a clear message with the exact `ollama pull` commands to run. No more cryptic "model not found" errors.
+- GUI status bar shows detected Ollama models on startup.
+
 ## v0.4.0 — 2026-04-18
 
 ### Added

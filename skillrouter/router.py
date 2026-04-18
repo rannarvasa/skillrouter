@@ -157,29 +157,58 @@ class Router:
         self.matcher = build_matcher(self.skills, self.config, root)
 
     def _validate_default_model(self):
-        """If config's default_model isn't installed, auto-pick the smallest installed Ollama tag."""
+        """Pick a default_model from whatever's actually installed.
+        Config's default_model is treated as a *preference*, not a hard requirement.
+        If the preferred tag is installed, use it. Otherwise auto-pick the smallest
+        installed non-embedding general-purpose model."""
         configured = self.config.get("default_model")
         installed_tags = [m["tag"] for m in self.registry.installed_ollama]
+
         if configured in installed_tags:
             return
-        if not installed_tags:
-            return  # nothing to fall back to; let callers error with a clear message later
 
+        pick = self._pick_best_default()
+        if pick:
+            if configured:
+                print(
+                    f"[router] preferred default_model '{configured}' not installed. "
+                    f"Using '{pick}' instead.",
+                    file=sys.stderr,
+                )
+            self.config["default_model"] = pick
+            return
+
+        # Nothing usable installed. Leave config's value alone; providers will raise
+        # with a clear message when someone actually tries to use it. Also expose a
+        # structured flag so the GUI / --doctor can show an onboarding screen.
+        self.no_models_installed = True
+
+    def _pick_best_default(self) -> Optional[str]:
         strength_order = {"tiny": 0, "small": 1, "strong": 2, "frontier": 3}
-        non_embed = [
+        general = [
             m for m in self.registry.installed_ollama
             if "embed" not in m["tag"].lower() and "general" in m["kinds"]
-        ] or self.registry.installed_ollama
-        non_embed.sort(key=lambda m: (strength_order.get(m["strength"], 1), m["tag"]))
-        pick = non_embed[0]["tag"]
+        ]
+        pool = general or [
+            m for m in self.registry.installed_ollama if "embed" not in m["tag"].lower()
+        ]
+        if not pool:
+            return None
+        pool.sort(key=lambda m: (strength_order.get(m["strength"], 1), m["tag"]))
+        return pool[0]["tag"]
 
-        if configured:
-            print(
-                f"[router] default_model '{configured}' is not installed. "
-                f"Using '{pick}' instead (auto-picked from installed models).",
-                file=sys.stderr,
-            )
-        self.config["default_model"] = pick
+    no_models_installed = False
+
+    @staticmethod
+    def onboarding_message() -> str:
+        return (
+            "No Ollama models are installed (or Ollama isn't running).\n\n"
+            "To get started, install Ollama from https://ollama.com, then pull at least one model:\n\n"
+            "  ollama pull qwen2.5:3b            # tiny + fast, good default (~2GB)\n"
+            "  ollama pull qwen2.5-coder:7b      # for coding tasks (~5GB)\n"
+            "  ollama pull nomic-embed-text      # for semantic skill matching (~275MB)\n\n"
+            "Then re-open skillrouter — it'll auto-detect whatever you have."
+        )
 
     def _load_config(self, path: Path) -> dict:
         with open(path, "r", encoding="utf-8") as f:

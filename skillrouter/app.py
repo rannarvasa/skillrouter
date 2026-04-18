@@ -23,7 +23,24 @@ class SkillRouterApp:
         self.queue: queue.Queue = queue.Queue()
         self.running = False
         self._build_ui()
+        if self.router.no_models_installed:
+            self._show_onboarding()
+        else:
+            self._show_detected_models()
         self.root.after(100, self._pump_queue)
+
+    def _show_onboarding(self):
+        self.send_btn.configure(state="disabled")
+        self._set_output(Router.onboarding_message())
+        self.route_label.configure(text="route: no models installed")
+        self.status.configure(text="install Ollama + pull a model, then reopen")
+
+    def _show_detected_models(self):
+        tags = [m["tag"] for m in self.router.registry.installed_ollama]
+        self.status.configure(
+            text=f"ready  |  {len(tags)} Ollama models detected: {', '.join(tags[:4])}"
+            + (" ..." if len(tags) > 4 else "")
+        )
 
     def _build_ui(self):
         pad = {"padx": 10, "pady": 6}

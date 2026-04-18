@@ -90,6 +90,10 @@ def main() -> int:
 
     router = Router(ROOT)
 
+    if router.no_models_installed and not args.doctor:
+        print(Router.onboarding_message(), file=sys.stderr)
+        return 5
+
     if args.doctor:
         doctor(router)
         return 0
